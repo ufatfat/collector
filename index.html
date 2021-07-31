@@ -1,0 +1,600 @@
+<html>
+    <head>
+        <title>报名系统</title>
+        <meta charset="utf-8">
+        <script src="./res/js/jq.js"></script>
+        <script src="./res/js/vue.js"></script>
+        <script src="./res/js/layer.js"></script>
+        <script src="./res/js/storage.js"></script>
+        <script src="./res/js/compress.js"></script>
+    </head>
+    
+    <body id="app">
+        <div style="position: relative; left: 50%; transform: translateX(-50%);background: rgba(247, 250, 252, .3);border-radius: 6px;display: flex;flex-direction: column;align-items: center;width: 1200px; padding: 60px 0;">
+            <div style="font-family: Inter;font-style: normal;font-weight: 500;font-size: 36px;line-height: 44px;color: #18A0FB;margin-bottom: 40px;">测评收集</div>
+            <div style="display: flex; align-items: center;flex-direction: column;">
+                <div class="inputItem">
+                    <label for="type" class="inputTitle">测评类型</label>
+                    <div class="inputDiv" style="width: 680px;">
+                        <input type="text" id="type" style="width: 650px;" v-model="uploadRes.type" autocomplete="off" readonly @click="uploadRes.showType=!uploadRes.showType" placeholder="你想要测评什么呢~" @blur="checkType($event)">
+                        <div class="selectGroup" style="width: 680px;" @mouseleave="uploadRes.showType=false" v-show="uploadRes.showType">
+                            <div class="opt" @click="changeType('', 0)">请选择</div>
+                            <div class="opt" @click="changeType('食物', 1)">食物</div>
+                            <div class="opt" @click="changeType('奶茶', 2)">奶茶</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="inputItem">
+                    <label for="name" class="inputTitle">名称</label>
+                    <div class="inputDiv" style="width: 680px;">
+                        <input type="text" id="name" style="width: 650px;" placeholder="测评的东西的名称辣~" autocomplete="off" v-model="uploadForm.name" @blur="checkName($event)">
+                    </div>
+                </div>
+                <div class="inputItem">
+                    <label for="place" class="inputTitle">地点</label>
+                    <div class="inputDiv" style="width: 680px;">
+                        <input type="text" id="place" style="width: 650px;" placeholder="在哪儿买的~商店、食堂或者店铺都行~" autocomplete="off" v-model="uploadForm.place" @blur="checkPlace($event)">
+                    </div>
+                </div>
+                <div class="inputItem">
+                    <label for="phone" class="inputTitle">电话号码</label>
+                    <div class="inputDiv" style="width: 680px;">
+                        <input type="text" id="phone" style="width: 650px;" placeholder="留一个电话号码吧~可以用来抽奖的喔~" autocomplete="off" v-model="uploadForm.phone" @blur="checkPhone($event)" maxlength="11">
+                    </div>
+                </div>
+                <div class="inputItem">
+                    <label for="comment" class="inputTitle">测评</label>
+                    <div class="inputDiv" style="width: 680px; height: 340px;">
+                        <textarea id="comment" style="width: 650px; height: 300px;" placeholder="说说你为什么推荐这个东西吧~" autocomplete="off" v-model="uploadForm.comment" maxlength="2048" ></textarea>
+                    </div>
+                </div>
+                <div class="inputItem" v-if="!uploadRes.isSubmitted">
+                    <div>
+                        <span class="btn dark" @click="submit">提交</span>
+                    </div>
+                </div>
+                <div class="inputItem" v-if="uploadRes.isSubmitted">
+                    <div class="inputDiv" style="width: 380px; background: none; justify-content: space-evenly;">
+                        <div class="btn" @click="changeImageNum(-1)">删除照片</div>
+                        <div class="btn" @click="changeImageNum(1)">增加照片</div>
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-evenly; align-items: center; width: 100%; flex-wrap: wrap;" v-if="uploadRes.isSubmitted">
+                <template v-for="i in uploadRes.imageNum">
+                    <div style="height: 420px; width: 297px; display: flex; justify-content: center;align-items: center; background: rgba(200,200,200, .7);border-radius: 6px;position: relative;cursor: pointer; margin: 30px 30px;" :data-idx="i" @click="chooseImage($event)" title="点击选择图片上传">
+                        <span style="position: absolute; top: 2px; right: 2px;">{{ uploadRes.uploadProgress[i] }}</span>
+                        <img :src="uploadRes.imgs[i-1]"  style="overflow: hidden;" v-if="uploadRes.thumbnailDisplay[i-1]" :data-idx="i" @click="chooseImage($event)" />
+                        <span v-else>
+                            <svg :data-idx="i" @click="chooseImage($event)" width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg" style="transform: scale(2);">
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M12.5 2.60417C7.03468 2.60417 2.60417 7.03468 2.60417 12.5C2.60417 17.9653 7.03468 22.3958 12.5 22.3958C17.9653 22.3958 22.3958 17.9653 22.3958 12.5C22.3958 7.03468 17.9653 2.60417 12.5 2.60417ZM1.5625 12.5C1.5625 6.45938 6.45938 1.5625 12.5 1.5625C18.5406 1.5625 23.4375 6.45938 23.4375 12.5C23.4375 18.5406 18.5406 23.4375 12.5 23.4375C6.45938 23.4375 1.5625 18.5406 1.5625 12.5ZM12.5 7.8125C12.7876 7.8125 13.0208 8.04568 13.0208 8.33333V11.9792H16.6667C16.9543 11.9792 17.1875 12.2124 17.1875 12.5C17.1875 12.7876 16.9543 13.0208 16.6667 13.0208H13.0208V16.6667C13.0208 16.9543 12.7876 17.1875 12.5 17.1875C12.2124 17.1875 11.9792 16.9543 11.9792 16.6667V13.0208H8.33333C8.04568 13.0208 7.8125 12.7876 7.8125 12.5C7.8125 12.2124 8.04568 11.9792 8.33333 11.9792H11.9792V8.33333C11.9792 8.04568 12.2124 7.8125 12.5 7.8125Z" fill="black"/>
+                            </svg>
+                        </span>
+                        <input type="file" :id="'file'+i" :data-idx="i" accept="image/*" style="display: none;" @change="uploadImage($event)">
+                    </div>
+                    </template>
+                </div>
+        </div>
+        <footer id="footer">
+            <div style="height: 100px; display: flex; justify-content: center; align-items: center;">
+                <span>&copy; 2020 - 2021 Pivot Studio</span>
+            </div>
+        </footer>
+    </body>
+</html>
+
+<script>
+    let storage = new Storage()
+    const App = {
+        data () {
+            return {
+                uploadRes: {
+                    showType: false,
+                    type: "",
+                    imageNum: 1,
+                    maxImageNum: 6,
+                    uploadProgress: [],
+                    imgs: [],
+                    maxFileSize: 10 * 1024 * 1024,
+                    thumbnailDisplay: [],
+                    isSubmitted: false,
+                    id: 0,
+                },
+                uploadForm: {
+                    type: 0,
+                    name: "",
+                    place: "",
+                    phone: "",
+                    comment: "",
+                }
+            }
+        },
+        methods: {
+            changeImageNum (v) {
+                if ((-1 == v && this.uploadRes.imageNum == 0) || (1 == v && this.uploadRes.imageNum == this.uploadRes.maxImageNum)) {
+                    return
+                } else if (-1 == v && !("" == this.uploadRes.imgs[this.uploadRes.imageNum-1] || undefined == this.uploadRes.imgs[this.uploadRes.imageNum-1] || null == this.uploadRes.imgs[this.uploadRes.imageNum-1])) {
+                    let idx = layer.confirm("当前图片已上传，删除后对应图纸需重新上传，确定吗？", {
+                        btn: ["确认", "取消"]
+                    }, () => {
+                        let res = this.uploadRes
+                        res.uploadProgress[res.imageNum-1] = ""
+                        res.imgs[res.imageNum-1] = ""
+                        res.thumbnailDisplay[res.imageNum-1] = false
+                        $.ajax({
+                            url: "/api/upload/image?index=" + res.imageNum,
+                            type: "DELETE",
+                            success: (data, status) => {
+                                layer.msg("删除成功！")
+                                layer.close(idx)
+                                this.uploadRes.imageNum = this.uploadRes.imageNum + v
+                            }
+                        })
+                    }, () => {
+                        layer.close(idx)
+                    })
+                } else {
+                    this.uploadRes.imageNum = this.uploadRes.imageNum + v
+                }
+            },
+            chooseImage (ev) {
+                idx = ev.target.dataset.idx
+                $("#file" + idx).click()
+                ev.stopPropagation()
+            },
+            checkName (ev) {
+                if ("" == ev.target.value) {
+                    layer.msg("名称不能为空喔~")
+                    return
+                }
+            },
+            checkPlace (ev) {
+                if ("" == ev.target.value) {
+                    layer.msg("地点不能为空喔~")
+                    return
+                }
+            },
+            checkType (ev) {
+                if ("" == ev.target.value) {
+                    layer.msg("不能不选类型喔~")
+                    return
+                }
+            },
+            checkPhone (ev) {
+                p = ev.target.value
+                if ("" != p) {
+                    let patt = /^(13[0-9]|14[5|7]|15[0|1|2|3|4|5|6|7|8|9]|18[0|1|2|3|5|6|7|8|9])\d{8}$/
+                    if (!patt.test(p)) {
+                        layer.msg("手机号格式不对喔~")
+                        return
+                    }
+                }
+            },
+            submit () {
+                $.ajax({
+                    url: "/api/comment",
+                    data: this.uploadForm,
+                    type: "POST",
+                    success: (data, status) => {
+                        this.uploadRes.id = data.id
+                        this.uploadRes.isSubmitted = true
+                    }
+                })
+            },
+            uploadImage (ev) {
+                fd = new FormData()
+                file = ev.target.files[0]
+                idx = ev.target.dataset.idx
+                if (file.size > this.uploadRes.maxFileSize) {
+                    layer.msg("文件大小超出限制了喔~")
+                    return
+                }
+                let url = window.webkitURL || window.URL
+                this.uploadRes.imgs[idx-1] = url.createObjectURL(file)
+                this.uploadRes.thumbnailDisplay[idx-1] = true
+                fd.append("image", file)
+                fd.append("index", idx) 
+                fd.append("id", this.uploadRes.id)
+                $.ajax({
+                    url: "/api/upload",
+                    type: "POST",
+                    data: fd,
+                    cache: false,
+                    processData: false,
+                    contentType: false,
+                    xhr: () => {
+                        xhr = $.ajaxSettings.xhr()
+                        if (xhr.upload) {
+                            xhr.upload.addEventListener("progress", (ev) => {
+                                var percent = Math.floor(event.loaded / event.total * 100);
+                                if (100 < percent) {
+                                    this.uploadRes.uploadProgress[idx] = "已上传" + percent + "%"
+                                } else if (100 == percent) {
+                                    this.uploadRes.uploadProgress[idx] = "上传成功辣"
+                                }
+                            }, false)
+                        }
+                        return xhr
+                    },
+                    success: (data, status) => {
+                        console.log(data)
+                    }
+                })
+            },
+            changeType (t, v) {
+                this.uploadRes.type = t
+                this.uploadForm.type = v
+                this.uploadRes.showType = false
+            },
+        },
+    }
+    Vue.createApp(App).mount("#app")
+</script>
+
+<style>
+    input,textarea {
+        outline:none
+    }
+    #contentBoxDiv {
+        margin: 120px 0 200px;
+        padding: 0 90px;
+    }
+    #contentTitle {
+        font-family: Montserrat;
+        font-style: normal;
+        font-weight: normal;
+        font-size: 48px;
+        line-height: 72px;
+        letter-spacing: -0.015em;
+        color: #000000;
+    }
+    #mainBoxDiv {
+        display: flex;
+        flex-direction: column; 
+        justify-content: center; 
+        align-items: center; 
+        position: absolute; 
+        top: 50%; 
+        left: 50%; 
+        transform: translate(-50%, -50%); 
+        width: 100%;
+    }
+    #mainBoxDiv #mainBoxTitle {
+        font-family: Montserrat;
+        font-style: normal;
+        font-weight: normal;
+        font-size: 56px;
+        line-height: 80px;
+        letter-spacing: -0.015em;
+        color: #FFFFFF;
+    }
+    #header {
+        height: 60px;
+        width: 100%;
+        top: 0;
+        left: 0;
+        position: absolute;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #FFFFFF;
+        box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    }
+    .contestName {
+        font-family: Comfortaa;
+        font-style: normal;
+        font-weight: normal;
+        font-size: 14px;
+        line-height: 16px;
+        margin-left: 18px;
+    }
+    #header #leftDiv {
+        display: flex;
+        align-items: center;
+        margin-left: 54px;
+    }
+    #header #rightLinksDiv {
+        display: flex;
+        justify-content: space-evenly;
+        align-items: center;
+        margin-right: 80px;
+    }
+    #rightLinksDiv .links {
+        display: flex;
+        align-items: center;
+    }
+    .links .link {
+        height: 50px;
+    }
+    .btns {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 272px;
+        margin-left: 66px;
+    }
+    #mask {
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        position: fixed;
+        background: rgba(0, 0, 0, .5);
+        z-index: 10;
+    }
+    @media screen and (max-width: 1300px) {
+        #mainBoxTitle {
+            font-size: 18px !important;
+        }
+        #contentBoxDiv {
+            padding: 0 10px;
+        }
+        #contentTitle {
+            font-size: 32px;
+        }
+        #header #rightLinksDiv {
+            position: fixed;
+            right: 0px;
+            flex-direction: column;
+            background: #ffffff;
+            z-index: 20;
+            top: 0px;
+            margin: 0;
+            padding: 20px 0;
+            border-left: 2px solid rgba(0, 0, 0, .3);
+            border-bottom: 2px solid rgba(0, 0, 0, .3);
+            height: 100vh;
+            justify-content: flex-start;
+            width: 120px;
+        }
+        #rightLinksDiv .links {
+            flex-direction: column;
+        }
+        .btns {
+            flex-direction: column;
+            margin: 20px 0 0 !important;
+            height: 100px;
+        }
+        .btns .btn {
+            width: 100px;
+        }
+        #footer {
+            display: none;
+        }
+        .rightForm {
+            position: absolute;
+            top: 150px;
+            left: 50vw;
+            transform: translateX(-50%);
+        }
+        .contestName {
+            font-size: 12px;
+        }
+        #header #leftDiv {
+            margin-left: 10px;
+        }
+        .logo {
+            width: 32px;
+            height: 32px;
+        }
+    }
+    input {
+        border: none;
+        outline: none;
+        background: none;
+    }
+    .formLink {
+        font-family: Arial;
+        font-style: normal;
+        font-weight: normal;
+        font-size: 12px;
+        line-height: 14px;
+        color: #18A0FB; 
+        cursor: pointer;
+    }
+    .rightForm {
+        width: 480px;
+        position: absolute;
+        top: 150px;
+        right: 120px; 
+        background: rgba(247, 250, 252, .3); 
+        border-radius: 6px; 
+        display: flex; 
+        flex-direction: column;
+        padding-bottom: 25px;
+    }
+    /*@media screen and (max-width: 1700px) {
+        .rightForm {
+            transform: scale(.9,.9);
+        }
+    }*/
+    .rightForm .formTitle {
+        margin: 42px 0 0 54px;
+        font-family: Inter;
+        font-style: normal;
+        font-weight: 500;
+        font-size: 18px;
+        line-height: 22px;
+        color: #18A0FB;
+        text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    }
+    .inputItem {
+        margin: 20px 46px 0 54px;
+    }
+    .inputItem .inputTitle {
+        font-family: Inter;
+        font-style: normal;
+        font-weight: 500;
+        font-size: 12px;
+        line-height: 15px;
+        color: #718096;
+    }
+    .inputItem .inputDiv {
+        margin-top: 14px;
+        background: #E2E8F0;
+        border-radius: 2.5px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    .inputItem input {
+        height: 28px;
+        font-family: Inter;
+        font-style: normal;
+        font-weight: 500;
+        font-size: 14px;
+        line-height: 18px;
+        color: #2D3748; 
+    }
+    /*.inputItem input::-ms-reveal {
+        display: none;
+    }*/
+    .link {
+        margin: auto 27px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        font-family: Montserrat;
+        font-style: normal;
+        font-weight: 500;
+        font-size: 15px;
+        line-height: 18px;
+        color: #18A0FB;
+        cursor: pointer;
+        border-bottom: 3px solid rgba(0, 0, 0, 0);
+    }
+    .link.active {
+        border-bottom: 3px solid #18A0FB;;
+    }
+    .btns {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 272px;
+        margin-left: 66px;
+    }
+    .btn {
+        height: 40px;
+        width: 130px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #FFFFFF;
+        border: 1px solid #18A0FB;
+        box-sizing: border-box;
+        border-radius: 6px;
+        font-size: 15px;
+        line-height: 18px;
+        color: #18A0FB;
+        cursor: pointer;
+    }
+    .btn.disabled {
+        background: #cdcdcd;
+        border: none;
+        cursor: not-allowed;
+    }
+    .btn.dark {
+        background: #18A0FB;
+        color: #ffffff;
+    }
+    .btn.disabled {
+        background: #cdcdcd;
+    }
+    .backgroundImg {
+        position: relative;
+        top: 60px;
+        left: 0;
+        right: 0;
+        bottom: 250px;
+        width: 100%;
+        opacity: 0.58;
+        border: 0;
+    }
+    #footer {
+        height: 250px;
+        background: #ffffff;
+    }
+    .selectGroup {
+        position: absolute;
+        top: 50px;
+        width: 180px;
+        z-index: 1;
+        background: rgba(247, 250, 252, .7);
+        border-radius: 2.5px;
+        border-bottom: 1px solid #cccccc;
+    }
+    .selectGroup .opt {
+        padding-left: 10px;
+        height: 30px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+    }
+    .selectGroup .opt:hover {
+        background: #ffffff;
+    }
+    html,body {
+        user-select: none;
+        height: 100%;
+        margin: 0 !important;
+    }
+    ::-webkit-scrollbar {
+        display: none;
+    }
+
+    .topicOrgItemDiv {
+                        display: flex;
+                        justify-content: flex-start;
+                        align-items: flex-start;
+                        flex-wrap: wrap;
+                        width: 90%;
+                        margin-left: 5%;
+                    }
+                    .topicOrgItem {
+                        height: 80px;
+                        width: 19%;
+                        margin: 0 .5%;
+                    }
+                    .topicOrgItem.pureText {
+                        width: 200px;
+                        height: 80px;
+                        text-align: center;
+                        font-family: Montserrat;
+                        font-style: normal;
+                        font-weight: normal;
+                        font-size: 24px;
+                        line-height: 30px;
+                        text-align: center;
+                        letter-spacing: -0.015em;
+                        color: rgba(0, 0, 0, 0.8);
+                    }
+                    .topicOrgItem.textWithIcon {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                    }
+                    .textWithIcon .text {
+                        font-family: Montserrat;
+                        font-style: normal;
+                        font-weight: normal;
+                        font-size: 18px;
+                        line-height: 30px;
+                        text-align: center;
+                        letter-spacing: -0.015em;
+                        color: rgba(0, 0, 0, 0.8);
+                    }
+                    textarea {
+                        border: none;
+                        outline: none;
+                        background: none;
+                        resize: none;
+                        font-family: Inter;
+                        font-style: normal;
+                        font-weight: 500;
+                        font-size: 14px;
+                        line-height: 18px;
+                        color: #2D3748; 
+                    }
+</style>
