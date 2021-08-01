@@ -14,7 +14,8 @@
             <div style="font-family: Inter;font-style: normal;font-weight: 500;font-size: 36px;line-height: 44px;color: #18A0FB;margin-bottom: 40px;">测评收集</div>
             <div style="font-family: Inter;font-style: normal;font-weight: 500;font-size: 12px;line-height: 16px;color: #18A0FB;">
                 <p>本次测评收集的内容为食堂与奶茶，收集到的信息用于制作相关推文。</p>
-                <p>依次填好信息后点击提交，可以选择上传图片，单次测评最多可上传六张图片。（请大家务必上传至少一张图片！不然运营同学会很难受的呜呜呜TnT）</p>
+                <p>依次填好信息后点击提交，可以选择上传图片，单次测评最多可上传六张图片。（请大家务必上传至少一张图片！不然运营同学会很难受的呜呜呜T_T）</p>
+                <p>提交后会显示一个key；该key可以用来修改自己之前提交过的测评内容。</p>
                 <p>带*的为必填项，手机号用作发送中奖通知用。关于中奖方式详情请看置顶树洞。</p>
                 <p>本活动最终解释权归学生互联网团队Pivot Studio所有。</p>
             </div>
@@ -139,9 +140,14 @@
                     url: "/api/upload/key?key=" + key,
                     type: "GET",
                     success: (data, status) => {
+                        console.log(data)
                         let form = this.uploadForm
                         let res = this.uploadRes
-                        form = data.form
+                        form.name = data.form.name
+                        form.type = data.form.type
+                        form.place = data.form.place
+                        form.phone = data.form.phone
+                        form.comment = data.form.comment
                         res.type = res.typeArr[data.form.type]
                         res.isSubmitted = true
                         res.id = data.form.id
