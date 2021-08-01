@@ -18,6 +18,17 @@
                 <p>带*的为必填项，手机号用作发送中奖通知用。关于中奖方式详情请看置顶树洞。</p>
                 <p>本活动最终解释权归学生互联网团队Pivot Studio所有。</p>
             </div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                <div class="inputItem">
+                    <label for="key" class="inputTitle">我有key~</label>
+                    <div class="inputDiv" style="width: 480px;">
+                        <input type="text" id="key" style="width: 450px;" placeholder="输入你的key~我们来查一下数据嗷~" autocomplete="off">
+                    </div>
+                </div>
+                <div style="width: 200px;">
+                    <div class="btn dark" @click="queryKey">提交key！</div>
+                </div>
+            </div>
             <div style="display: flex; align-items: center;flex-direction: column;">
                 <div class="inputItem">
                     <label for="type" class="inputTitle">测评类型*</label>
@@ -104,11 +115,13 @@
                     maxFileSize: 10 * 1024 * 1024,
                     thumbnailDisplay: [],
                     isSubmitted: false,
+                    typeArr: ["", "食堂", "奶茶"],
                     id: 0,
                     name: "",
                     place: "",
                     phone: "",
                     comment: "",
+                    type1: 0,
                 },
                 uploadForm: {
                     type: 0,
@@ -120,6 +133,26 @@
             }
         },
         methods: {
+            queryKey () {
+                let key = $("#key").val()
+                $.ajax({
+                    url: "/api/upload/key?key=" + key,
+                    type: "GET",
+                    success: (data, status) => {
+                        let form = this.uploadForm
+                        let res = this.uploadRes
+                        form = data.form
+                        res.type = res.typeArr[data.form.type]
+                        res.isSubmitted = true
+                        res.id = data.form.id
+                        res.imageNum = data.img_num
+                        res.imgs = data.imgs
+                        for (let i = 0; i < data.img_num; i ++) {
+                            res.thumbnailDisplay[i] = true
+                        }
+                    }
+                })
+            },
             changeImageNum (v) {
                 if ((-1 == v && this.uploadRes.imageNum == 0) || (1 == v && this.uploadRes.imageNum == this.uploadRes.maxImageNum)) {
                     return
@@ -132,7 +165,7 @@
                         res.imgs[res.imageNum-1] = ""
                         res.thumbnailDisplay[res.imageNum-1] = false
                         $.ajax({
-                            url: "/api/upload?index=" + res.imageNum + "&id=" + res.id,
+                            url: "/api/upload/image?index=" + res.imageNum + "&id=" + res.id,
                             type: "DELETE",
                             success: (data, status) => {
                                 layer.msg("删除成功！")
@@ -157,11 +190,39 @@
                     layer.msg("名称不能为空喔~")
                     return
                 }
+                if (this.uploadForm.name != this.uploadRes.name) {
+                    $.ajax({
+                        url: "/api/update",
+                        type: "PUT",
+                        data: JSON.stringify({
+                            name: this.uploadForm.name,
+                            id: this.uploadRes.id
+                        }),
+                        success: (data, status) => {
+                            layer.msg("名称更新成功辣~")
+                            this.uploadRes.name = this.uploadForm.name
+                        }
+                    })
+                }
             },
             checkPlace (ev) {
                 if ("" == ev.target.value) {
                     layer.msg("地点不能为空喔~")
                     return
+                }
+                if (this.uploadForm.place != this.uploadRes.place) {
+                    $.ajax({
+                        url: "/api/update",
+                        type: "PUT",
+                        data: JSON.stringify({
+                            place: this.uploadForm.place,
+                            id: this.uploadRes.id
+                        }),
+                        success: (data, status) => {
+                            layer.msg("地点更新成功辣~")
+                            this.uploadRes.place = this.uploadForm.place
+                        }
+                    })
                 }
             },
             checkType (ev) {
@@ -171,6 +232,20 @@
                         return
                     }
                 }, 200)
+                if (this.uploadForm.type != this.uploadRes.type1) {
+                    $.ajax({
+                        url: "/api/update",
+                        type: "PUT",
+                        data: JSON.stringify({
+                            type: this.uploadForm.type,
+                            id: this.uploadRes.id
+                        }),
+                        success: (data, status) => {
+                            layer.msg("类型更新成功辣~")
+                            this.uploadRes.type1 = this.uploadForm.type
+                        }
+                    })
+                }
             },
             checkPhone (ev) {
                 p = ev.target.value
@@ -180,6 +255,20 @@
                         layer.msg("手机号格式不对喔~")
                         return
                     }
+                }
+                if (this.uploadForm.phone != this.uploadRes.phone) {
+                    $.ajax({
+                        url: "/api/update",
+                        type: "PUT",
+                        data: JSON.stringify({
+                            phone: this.uploadForm.phone,
+                            id: this.uploadRes.id
+                        }),
+                        success: (data, status) => {
+                            layer.msg("手机号更新成功辣~")
+                            this.uploadRes.phone = this.uploadForm.phone
+                        }
+                    })
                 }
             },
             submit () {
@@ -198,13 +287,14 @@
                     return
                 }
                 $.ajax({
-                    url: "/api/comment",
+                    url: "/api/upload/comment",
                     data: JSON.stringify(this.uploadForm),
                     type: "POST",
                     contentType: "application/json",
                     success: (data, status) => {
                         this.uploadRes.id = data.id
                         this.uploadRes.isSubmitted = true
+                        layer.alert("如果有需要的话，请记一下这个key：<br>" + data.uuid + "<br>如果需要修改本次提交的内容的话可以使用这个key")
                     }
                 })
             },
@@ -223,7 +313,7 @@
                 fd.append("index", idx) 
                 fd.append("id", this.uploadRes.id)
                 $.ajax({
-                    url: "/api/upload",
+                    url: "/api/upload/image",
                     type: "POST",
                     data: fd,
                     cache: false,
