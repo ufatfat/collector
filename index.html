@@ -173,11 +173,11 @@
                 }
             },
             submit () {
-                console.log(this.uploadForm)
                 $.ajax({
                     url: "/api/comment",
-                    data: this.uploadForm,
+                    data: JSON.stringify(this.uploadForm),
                     type: "POST",
+                    contentType: "application/json",
                     success: (data, status) => {
                         this.uploadRes.id = data.id
                         this.uploadRes.isSubmitted = true
