@@ -12,28 +12,34 @@
     <body id="app">
         <div style="position: relative; left: 50%; transform: translateX(-50%);background: rgba(247, 250, 252, .3);border-radius: 6px;display: flex;flex-direction: column;align-items: center;width: 1200px; padding: 60px 0;">
             <div style="font-family: Inter;font-style: normal;font-weight: 500;font-size: 36px;line-height: 44px;color: #18A0FB;margin-bottom: 40px;">测评收集</div>
+            <div style="font-family: Inter;font-style: normal;font-weight: 500;font-size: 12px;line-height: 16px;color: #18A0FB;">
+                <p>本次测评收集的内容为食堂与奶茶，收集到的信息用于制作相关推文。</p>
+                <p>依次填好信息后点击提交，可以选择上传图片，单次测评最多可上传六张图片。</p>
+                <p>带*的为必填项，手机号用作发送中奖通知用。关于中奖方式详情请看置顶树洞。</p>
+                <p>本活动最终解释权归学生互联网团队Pivot Studio所有。</p>
+            </div>
             <div style="display: flex; align-items: center;flex-direction: column;">
                 <div class="inputItem">
-                    <label for="type" class="inputTitle">测评类型</label>
+                    <label for="type" class="inputTitle">测评类型*</label>
                     <div class="inputDiv" style="width: 680px;">
                         <input type="text" id="type" style="width: 650px;" v-model="uploadRes.type" autocomplete="off" readonly @click="uploadRes.showType=!uploadRes.showType" placeholder="你想要测评什么呢~" @blur="checkType($event)">
                         <div class="selectGroup" style="width: 680px;" @mouseleave="uploadRes.showType=false" v-show="uploadRes.showType">
                             <div class="opt" @click="changeType('', 0)">请选择</div>
-                            <div class="opt" @click="changeType('食物', 1)">食物</div>
+                            <div class="opt" @click="changeType('食堂', 1)">食堂</div>
                             <div class="opt" @click="changeType('奶茶', 2)">奶茶</div>
                         </div>
                     </div>
                 </div>
                 <div class="inputItem">
-                    <label for="name" class="inputTitle">名称</label>
+                    <label for="name" class="inputTitle">名称*</label>
                     <div class="inputDiv" style="width: 680px;">
                         <input type="text" id="name" style="width: 650px;" placeholder="测评的东西的名称辣~" autocomplete="off" v-model="uploadForm.name" @blur="checkName($event)">
                     </div>
                 </div>
                 <div class="inputItem">
-                    <label for="place" class="inputTitle">地点</label>
+                    <label for="place" class="inputTitle">地点*</label>
                     <div class="inputDiv" style="width: 680px;">
-                        <input type="text" id="place" style="width: 650px;" placeholder="在哪儿买的~商店、食堂或者店铺都行~" autocomplete="off" v-model="uploadForm.place" @blur="checkPlace($event)">
+                        <input type="text" id="place" style="width: 650px;" placeholder="在哪儿买的~商店或者食堂都行~" autocomplete="off" v-model="uploadForm.place" @blur="checkPlace($event)">
                     </div>
                 </div>
                 <div class="inputItem">
@@ -43,7 +49,7 @@
                     </div>
                 </div>
                 <div class="inputItem">
-                    <label for="comment" class="inputTitle">测评</label>
+                    <label for="comment" class="inputTitle">测评*</label>
                     <div class="inputDiv" style="width: 680px; height: 340px;">
                         <textarea id="comment" style="width: 650px; height: 300px;" placeholder="说说你为什么推荐这个东西吧~" autocomplete="off" v-model="uploadForm.comment" maxlength="2048" ></textarea>
                     </div>
@@ -99,6 +105,10 @@
                     thumbnailDisplay: [],
                     isSubmitted: false,
                     id: 0,
+                    name: "",
+                    place: "",
+                    phone: "",
+                    comment: "",
                 },
                 uploadForm: {
                     type: 0,
@@ -173,6 +183,20 @@
                 }
             },
             submit () {
+                let form = this.uploadForm
+                if (0 == form.type) {
+                    layer.msg("还没有选择类型喔~")
+                    return
+                } else if ("" == form.name) {
+                    layer.msg("还没有填名称哦~")
+                    return
+                } else if ("" == form.place) {
+                    layer.msg("还没有填地点哦~")
+                    return
+                } else if ("" == form.comment) {
+                    layer.msg("还没有填测评内容哦~")
+                    return
+                }
                 $.ajax({
                     url: "/api/comment",
                     data: JSON.stringify(this.uploadForm),
@@ -516,7 +540,7 @@
         border: 0;
     }
     #footer {
-        height: 250px;
+        height: 100px;
         background: #ffffff;
     }
     .selectGroup {
