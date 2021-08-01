@@ -173,6 +173,7 @@
                 }
             },
             submit () {
+                console.log(this.uploadForm)
                 $.ajax({
                     url: "/api/comment",
                     data: this.uploadForm,
