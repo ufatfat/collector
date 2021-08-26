@@ -38,7 +38,7 @@ spec:
     spec:
       priorityClassName: high-priority
       containers:
-      - image: registry.cn-hangzhou.aliyuncs.com/pivotstudio/pivotcollector:latest
+      - image: registry.cn-hangzhou.aliyuncs.com/pivotstudio/collector:latest
         name: collector
         ports:
           - containerPort: 8110
